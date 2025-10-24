@@ -2,70 +2,59 @@ pipeline {
     agent any
 
     environment {
-        VENV_DIR = "venv"
-        GIT_CREDENTIAL_ID = "github-token" // Replace with your actual Jenkins credential ID
+        IMAGE_NAME = "app"
+        IMAGE_TAG = "v2"
+        DOCKER_REPO = "rajyalaxmichevula/shannu12"
     }
 
     stages {
-        stage('Checkout Code') {
+        stage("Docker Login") {
             steps {
-                // Use credentials for private Git repo
-                git url: 'https://github.com/your-username/pictionary-app.git', credentialsId: "${GIT_CREDENTIAL_ID}"
+                echo "Logging into Docker Hub..."
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    bat 'docker login -u %DOCKER_USER% -p %DOCKER_PASS%'
+                }
             }
         }
 
-        stage('Setup Python Environment') {
+        stage("Build Docker Image") {
             steps {
-                echo "Creating virtual environment..."
-                sh 'python3 -m venv $VENV_DIR'
-                sh '''
-                source $VENV_DIR/bin/activate
-                pip install --upgrade pip
+                echo "Building Docker Image..."
+                bat 'docker build -t %IMAGE_NAME%:%IMAGE_TAG% .'
+            }
+        }
+
+        stage("Push Docker Image to Docker Hub") {
+            steps {
+                echo "Tagging and pushing image..."
+                bat '''
+                    docker tag %IMAGE_NAME%:%IMAGE_TAG% %DOCKER_REPO%:latest
+                    docker push %DOCKER_REPO%:latest
                 '''
             }
         }
 
-        stage('Install Dependencies') {
+        stage("Deploy to Kubernetes") {
             steps {
-                echo "Installing dependencies..."
-                sh '''
-                source $VENV_DIR/bin/activate
-                pip install -r requirements.txt
-                '''
+                echo "Deploying to Kubernetes..."
+                bat 'kubectl apply -f deployment.yaml --validate=false'
+                bat 'kubectl apply -f service.yaml'
             }
         }
-
-        stage('Run Unit Tests') {
-            steps {
-                echo "Running unit tests..."
-                sh '''
-                source $VENV_DIR/bin/activate
-                python -m unittest discover tests
-                '''
-            }
-        }
-
-        stage('Run Flask App') {
-            steps {
-                echo "Starting Flask application..."
-                // Run Flask in background
-                sh '''
-                source $VENV_DIR/bin/activate
-                nohup python app.py &
-                '''
-            }
+        stage('Restart Deployment'){
+              steps{
+                  echo "Restarting Deployment to pick up new image.."
+                  bat "Kubectl rollout restart deployment/app-deployment"
+              }
         }
     }
 
     post {
-        always {
-            echo "Pipeline finished."
-        }
         success {
-            echo "Build and tests succeeded!"
+            echo '✅ Pipeline completed successfully!'
         }
         failure {
-            echo "Pipeline failed."
+            echo '❌ Pipeline failed. Please check logs.'
         }
     }
 }
