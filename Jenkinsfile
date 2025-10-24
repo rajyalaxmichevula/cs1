@@ -2,17 +2,22 @@ pipeline {
     agent any
 
     environment {
-        // Optional: specify Python version or virtual environment
         VENV_DIR = "venv"
+        GIT_CREDENTIAL_ID = "github-token" // Replace with your actual Jenkins credential ID
     }
 
     stages {
-        stage('Setup') {
+        stage('Checkout Code') {
             steps {
-                echo "Setting up Python environment..."
-                // Create virtual environment
+                // Use credentials for private Git repo
+                git url: 'https://github.com/your-username/pictionary-app.git', credentialsId: "${GIT_CREDENTIAL_ID}"
+            }
+        }
+
+        stage('Setup Python Environment') {
+            steps {
+                echo "Creating virtual environment..."
                 sh 'python3 -m venv $VENV_DIR'
-                // Activate venv and upgrade pip
                 sh '''
                 source $VENV_DIR/bin/activate
                 pip install --upgrade pip
@@ -22,7 +27,7 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                echo "Installing Python dependencies..."
+                echo "Installing dependencies..."
                 sh '''
                 source $VENV_DIR/bin/activate
                 pip install -r requirements.txt
@@ -30,7 +35,7 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
+        stage('Run Unit Tests') {
             steps {
                 echo "Running unit tests..."
                 sh '''
@@ -40,9 +45,10 @@ pipeline {
             }
         }
 
-        stage('Run Application') {
+        stage('Run Flask App') {
             steps {
-                echo "Starting Flask app..."
+                echo "Starting Flask application..."
+                // Run Flask in background
                 sh '''
                 source $VENV_DIR/bin/activate
                 nohup python app.py &
@@ -56,10 +62,10 @@ pipeline {
             echo "Pipeline finished."
         }
         success {
-            echo "Build succeeded!"
+            echo "Build and tests succeeded!"
         }
         failure {
-            echo "Build failed."
+            echo "Pipeline failed."
         }
     }
 }
