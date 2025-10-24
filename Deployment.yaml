@@ -1,62 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pictionary-deployment
-  labels:
-    app: pictionary
+  name: app-deployment
 spec:
-  replicas: 2  # Number of pod replicas
+  replicas: 4
   selector:
     matchLabels:
-      app: pictionary
+      app: app
   template:
     metadata:
       labels:
-        app: pictionary
+        app: app
     spec:
       containers:
-        - name: pictionary-app
-          image: your-dockerhub-username/pictionary-app:latest  # Replace with your image
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 5000
-          env:
-            - name: FLASK_ENV
-              value: "production"
-            - name: FLASK_APP
-              value: "app.py"
-          resources:
-            requests:
-              memory: "128Mi"
-              cpu: "250m"
-            limits:
-              memory: "256Mi"
-              cpu: "500m"
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 5000
-            initialDelaySeconds: 10
-            periodSeconds: 15
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 5000
-            initialDelaySeconds: 5
-            periodSeconds: 10
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: pictionary-service
-  labels:
-    app: pictionary
-spec:
-  type: NodePort  # Use LoadBalancer on cloud provider if needed
-  selector:
-    app: pictionary
-  ports:
-    - protocol: TCP
-      port: 5000       # Service port
-      targetPort: 5000 # Container port
-      nodePort: 30036  # Node port (optional, can be auto-assigned)
+      - name: app
+        image: rajyalaxmichevula/shannu12:latest
+        ports:
+        - containerPort: 5000
+
