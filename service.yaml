@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pictionary-service
+  labels:
+    app: pictionary
+spec:
+  type: NodePort       # Exposes the service outside the cluster; change to LoadBalancer if using cloud
+  selector:
+    app: pictionary
+  ports:
+    - protocol: TCP
+      port: 5000       # Port inside the cluster
+      targetPort: 5000 # Port the Flask app is listening on
+      nodePort: 30036  # Port on the node (optional; Kubernetes can auto-assign)

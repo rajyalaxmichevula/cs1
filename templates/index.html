@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pictionary Word Generator</title>
+    <style>
+        body { font-family: Arial; text-align: center; margin-top: 50px; background: #f8f9fa; }
+        h1 { color: #333; }
+        button { padding: 10px 20px; margin: 10px; font-size: 18px; border: none; border-radius: 5px; cursor: pointer; }
+        .easy { background: #4caf50; color: white; }
+        .medium { background: #ff9800; color: white; }
+        .hard { background: #f44336; color: white; }
+        #word-box { margin-top: 40px; font-size: 28px; font-weight: bold; color: #222; }
+    </style>
+</head>
+<body>
+    <h1>🎨 Pictionary Word Generator</h1>
+    <p>Choose difficulty:</p>
+    <button class="easy" onclick="getWord('easy')">Easy</button>
+    <button class="medium" onclick="getWord('medium')">Medium</button>
+    <button class="hard" onclick="getWord('hard')">Hard</button>
+    <div id="word-box">Your word will appear here!</div>
+
+    <script>
+        async function getWord(difficulty) {
+            const response = await fetch("/get_word", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ difficulty })
+            });
+            const data = await response.json();
+            document.getElementById("word-box").innerText = data.word
+                ? data.word.toUpperCase()
+                : "Error fetching word.";
+        }
+    </script>
+</body>
+</html>
